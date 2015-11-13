@@ -1,9 +1,9 @@
 package com.udacity.gradle.builditbigger.backend;
 
 /**
- * The object model for the data we are sending through endpoints
+ * Created by Elias Myronidis on 13/11/15.
  */
-public class MyBean {
+public class JokeBean {
 
     private String myData;
 
@@ -14,4 +14,5 @@ public class MyBean {
     public void setData(String data) {
         myData = data;
     }
+
 }

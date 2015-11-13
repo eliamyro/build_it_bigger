@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,7 +15,7 @@ import com.google.api.client.extensions.android.json.AndroidJsonFactory;
 import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
 import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
 import com.udacity.gradle.androidjoke.AndroidJokeActivity;
-import com.udacity.gradle.builditbigger.backend.myApi.MyApi;
+import com.udacity.gradle.builditbigger.backend.jokeBeanApi.JokeBeanApi;
 
 import java.io.IOException;
 
@@ -65,18 +64,26 @@ public class MainActivity extends AppCompatActivity {
         // androidIntent.putExtra(AndroidJokeActivity.JOKE_KEY, joke.getJoke());
         // startActivity(androidIntent);
 
-        new EndpointsAsyncTask().execute(new Pair<Context, String>(this, "Manfred"));
+        new EndpointsAsyncTask(this).execute();
     }
 }
 
-class EndpointsAsyncTask extends AsyncTask<Pair<Context, String>, Void, String> {
-    private static MyApi myApiService = null;
-    private Context context;
+class EndpointsAsyncTask extends AsyncTask<Void, Void, String> {
+    private static JokeBeanApi myApiService = null;
+    private Context mContext;
+
+    private EndpointsAsyncTaskListener mListener = null;
+    private Exception mError = null;
+
+    public EndpointsAsyncTask(Context context){
+        mContext = context;
+
+    }
 
     @Override
-    protected String doInBackground(Pair<Context, String>... params) {
+    protected String doInBackground(Void... params) {
         if(myApiService == null) {  // Only do this once
-            MyApi.Builder builder = new MyApi.Builder(AndroidHttp.newCompatibleTransport(),
+            JokeBeanApi.Builder builder = new JokeBeanApi.Builder(AndroidHttp.newCompatibleTransport(),
                     new AndroidJsonFactory(), null)
                     // options for running against local devappserver
                     // - turn off compression when running against local devappserver
@@ -97,23 +104,40 @@ class EndpointsAsyncTask extends AsyncTask<Pair<Context, String>, Void, String> 
             myApiService = builder.build();
         }
 
-        context = params[0].first;
-        String name = params[0].second;
-
         try {
-            return myApiService.sayHi(name).execute().getData();
+            return myApiService.showJoke().execute().getData();
         } catch (IOException e) {
             return e.getMessage();
         }
+    }
+
+    public EndpointsAsyncTask setListener(EndpointsAsyncTaskListener listener) {
+        this.mListener = listener;
+        return this;
     }
 
     @Override
     protected void onPostExecute(String result) {
         // Toast.makeText(context, result, Toast.LENGTH_LONG).show();
 
+        if (this.mListener != null)
+            this.mListener.onComplete(result, mError);
+
         // Retrieve joke from GCE and launch the activity from the Android Library to display it.
-        Intent androidIntent = new Intent(context, AndroidJokeActivity.class);
+        Intent androidIntent = new Intent(mContext, AndroidJokeActivity.class);
         androidIntent.putExtra(AndroidJokeActivity.JOKE_KEY, result);
-        context.startActivity(androidIntent);
+        mContext.startActivity(androidIntent);
+    }
+
+    @Override
+    protected void onCancelled() {
+        if (this.mListener != null) {
+            mError = new InterruptedException("AsyncTask cancelled");
+            this.mListener.onComplete(null, mError);
+        }
+    }
+
+    public static interface EndpointsAsyncTaskListener {
+        public void onComplete(String message, Exception e);
     }
 }
