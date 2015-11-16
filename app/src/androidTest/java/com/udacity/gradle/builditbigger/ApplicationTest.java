@@ -5,6 +5,7 @@ import android.test.ApplicationTestCase;
 import android.text.TextUtils;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <a href="http://d.android.com/tools/testing/testing_android.html">Testing Fundamentals</a>
