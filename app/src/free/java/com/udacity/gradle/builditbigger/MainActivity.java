@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.ads.AdListener;
@@ -27,11 +28,15 @@ public class MainActivity extends AppCompatActivity {
 
     private InterstitialAd mInterstitialAd;
     Context mContext;
+    private ProgressBar mProgressBar;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mProgressBar = (ProgressBar)findViewById(R.id.progressBar);
 
         mContext = this;
 
@@ -41,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
         mInterstitialAd.setAdListener(new AdListener() {
             @Override
             public void onAdClosed() {
-                new EndpointsAsyncTask(mContext).execute();
+                new EndpointsAsyncTask(mContext, mProgressBar).execute();
                 requestNewInterstitial();
             }
         });
@@ -92,13 +97,12 @@ public class MainActivity extends AppCompatActivity {
         // Intent androidIntent = new Intent(this, AndroidJokeActivity.class);
         // androidIntent.putExtra(AndroidJokeActivity.JOKE_KEY, joke.getJoke());
         // startActivity(androidIntent);
-
-        Toast.makeText(MainActivity.this, "We are in free edition", Toast.LENGTH_SHORT).show();
+        mProgressBar.setVisibility(View.VISIBLE);
 
         if (mInterstitialAd.isLoaded()) {
             mInterstitialAd.show();
         } else {
-            new EndpointsAsyncTask(this).execute();
+            new EndpointsAsyncTask(this, mProgressBar).execute();
         }
 
     }
@@ -110,10 +114,18 @@ class EndpointsAsyncTask extends AsyncTask<Void, Void, String> {
 
     private EndpointsAsyncTaskListener mListener = null;
     private Exception mError = null;
+    private ProgressBar mProgressBar;
 
-    public EndpointsAsyncTask(Context context){
+    public EndpointsAsyncTask(Context context, ProgressBar progressBar){
         mContext = context;
+        mProgressBar = progressBar;
 
+    }
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        mProgressBar.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -163,6 +175,8 @@ class EndpointsAsyncTask extends AsyncTask<Void, Void, String> {
         Intent androidIntent = new Intent(mContext, AndroidJokeActivity.class);
         androidIntent.putExtra(AndroidJokeActivity.JOKE_KEY, result);
         mContext.startActivity(androidIntent);
+
+        mProgressBar.setVisibility(View.GONE);
     }
 
     @Override

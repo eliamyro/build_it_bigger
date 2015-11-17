@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
@@ -22,10 +23,14 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
+    private ProgressBar mProgressBar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mProgressBar = (ProgressBar)findViewById(R.id.progressBar);
     }
 
 
@@ -64,20 +69,27 @@ public class MainActivity extends AppCompatActivity {
         // androidIntent.putExtra(AndroidJokeActivity.JOKE_KEY, joke.getJoke());
         // startActivity(androidIntent);
 
-        new EndpointsAsyncTask(this).execute();
+        new EndpointsAsyncTask(this, mProgressBar).execute();
     }
 }
 
 class EndpointsAsyncTask extends AsyncTask<Void, Void, String> {
     private static JokeBeanApi myApiService = null;
     private Context mContext;
+    private ProgressBar mProgressBar;
 
     private EndpointsAsyncTaskListener mListener = null;
     private Exception mError = null;
 
-    public EndpointsAsyncTask(Context context){
+    public EndpointsAsyncTask(Context context, ProgressBar progressBar){
         mContext = context;
+        mProgressBar = progressBar;
+    }
 
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        mProgressBar.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -127,6 +139,8 @@ class EndpointsAsyncTask extends AsyncTask<Void, Void, String> {
         Intent androidIntent = new Intent(mContext, AndroidJokeActivity.class);
         androidIntent.putExtra(AndroidJokeActivity.JOKE_KEY, result);
         mContext.startActivity(androidIntent);
+
+        mProgressBar.setVisibility(View.GONE);
     }
 
     @Override
