@@ -17,3 +17,24 @@ allprojects {
         jcenter()
     }
 }
+
+evaluationDependsOn ":backend"
+
+project(":backend"){
+    appengine{
+        daemon true
+    }
+}
+
+tasks.getByPath(":app:connectedAndroidTest").mustRunAfter tasks.getByPath(":backend:appengineRun")
+tasks.getByPath(":backend:appengineStop").mustRunAfter tasks.getByPath(":app:connectedAndroidTest")
+
+task runAllTests{
+    dependsOn ":backend:appengineRun", ":app:connectedAndroidTest", ":backend:appengineStop"
+
+    doLast{
+        println "All tests done!"
+    }
+}
+
+
